@@ -285,13 +285,45 @@ docker run --name  myNginx -d -p 81:80 nginx:v2
 
 ###### 4.4容器卷和主机互通互联
 
+卷的目的就是**数据的持久化**,完全独立于容器的生成周期，因此Docker不会在容器删除时删除其挂载的数据卷。
+
++ 有点类似Redis里面的rdb和aof文件
++ 将docker容器内的数据保存进宿主机的磁盘中
++ 运行一个带有容器卷存储功能的容器实例
+  + docker run -it --privileged=true **-v** /宿主机绝对路径目录:/容器内目录      镜像名
 
 
 
 
 
+**命令**
 
-###### 4.4 使用Dockerfile定制镜像
+```shell
+docker run -it --name myu3 --privileged=true -v /tmp/myHostData:/tmp/myDockerData ubuntu /bin/bash
+
+```
+
+进入我们的容器内部
+
+```shell
+docker exec -it  myu3 /bin/bash
+
+cd  /tmp/myDockerData
+```
+
+
+
+![](image\容器卷.png)
+
+此时我们的硬盘目录和容器内部目录下面分别有2个相同的文件，faker.txt及hello-world.txt，我们在容器内部添加一个新的文件，文件会同步到我们的硬盘目录下面去
+
+![](\image\容器卷新增测试新增文件.png)
+
+
+
+容器卷和主机互通互联成功
+
+###### 4.5 使用Dockerfile定制镜像
 
 Dockerfile是一个文本文件，其包含了一条条的指令，每一条指令构建一层，因此每一条指令的内容就是描述该层如何构建。
 
@@ -385,7 +417,7 @@ COPY ./package.json /app/
 
 
 
-##### 4.5 Dockerfile指令
+##### 4.6 Dockerfile指令
 
 ###### **COPY复制文件**
 
@@ -760,3 +792,11 @@ mybatis:
 
 
 至此，docker-compose的功能测试完毕。
+
+
+
+
+
+#### 其他：
+
+参考：
