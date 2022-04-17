@@ -13,7 +13,7 @@ Docker 利用 Linux 核心中的资源分脱机制，例如 cgroups，以及 Lin
 
 ###### 1.2 Docker和虚拟机的区别与特点
 
-![](C:\Users\tuouren\Desktop\docker\image\docker与虚拟机1.png)
+![](\image\docker与虚拟机1.png)
 
 对于虚拟机来说，需要模拟整台机器包括硬件，每台虚拟机都要有自己的操作系统。
 
@@ -21,7 +21,7 @@ Docker 利用 Linux 核心中的资源分脱机制，例如 cgroups，以及 Lin
 
 
 
-![](C:\Users\tuouren\Desktop\docker\image\docker与虚拟机2.png)
+![](\image\docker与虚拟机2.png)
 
 容器技术和我们的宿主机共享硬件资源和操作系统，可以实现资源的动态分配。容器包含应用和其所有的依赖包，但是与其他容器共享内核。
 
@@ -109,7 +109,7 @@ systemctl enable docker
 docker info
 ```
 
-![安装成功截图](C:\Users\tuouren\Desktop\docker\image\docker_info.png)
+![安装成功截图](\image\docker_info.png)
 
 
 
@@ -127,7 +127,7 @@ docker info
 docker pull hello-world
 ```
 
-###### ![](C:\Users\tuouren\Desktop\docker\image\hello-world.png)
+###### ![](\image\hello-world.png)
 
 
 
@@ -188,7 +188,7 @@ docker attach
 docker exec：推荐大家使用 docker exec 命令，因为此命令会退出容器终端，但不会导致容器的停止。
 ```
 
-![](C:\Users\tuouren\Desktop\docker\image\进入容器内部.png)
+![](\image\进入容器内部.png)
 
 
 
@@ -261,7 +261,7 @@ nginx:v2
 
 ```
 
-![](C:\Users\tuouren\Desktop\docker\image\nginxv2.png)
+![](image\nginxv2.png)
 
 新的镜像制作好后，我们可以来运行这个镜像
 
@@ -484,7 +484,7 @@ ENTRYPOINT java ${JAVA_OPTS} -jar /usr/local/demo_app/mall-tiny.jar
 docker build -t mall-tiny:1.0 . 
 ```
 
-![](C:\Users\tuouren\Desktop\docker\image\构建好的镜像.png)
+![](\image\构建好的镜像.png)
 
 
 
@@ -615,3 +615,138 @@ CMD ["python", "app.py"]
 **docker-compose.yml**
 
 编写docker-compose.yml文件，这个是Compose使用的主模板文件
+
+
+
+
+
+###### 5.3使用docker-compose编排SpringBoot服务
+
+
+
+
+
+我们使用docker-compose编排一个springboot的服务，服务配置文件见下
+
+application.yml
+
+```yaml
+spring:
+  datasource:
+    username: root
+    password: woaini
+    url: jdbc:mysql://uni_mysql:3306/swls?useUnicode=true&characterEncoding=UTF-8
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    type: com.alibaba.druid.pool.DruidDataSource
+  #thymeleaf start
+  thymeleaf:
+    mode: HTML5
+    encoding: UTF-8
+    content-type: text/html
+    #开发时关闭缓存,不然没法看到实时页面
+    cache: false
+  redis:
+    host: uni_redis # redis 的主机IP名
+    port: 6379
+    username: root
+mybatis:
+#  config-location: classpath:mybatis/mybatis-config.xml
+  mapper-locations: classpath:mybatis/mapper/*.xml
+```
+
+
+
++ 1 准备工作，使用maven打包，复制我们的jar包到linux下的一个目录中
+
+![](\image\jar包.png)
+
+
+
++ 2 编写Dockerfile文件
+
+  ```d
+  # 基础镜像使用java
+  FROM java:8
+  # 作者
+  MAINTAINER uni
+  # VOLUME 指定临时文件目录为/tmp，在主机/var/lib/docker目录下创建了一个临时文件并链接到容器的/tmp
+  VOLUME /tmp
+  # 将jar包添加到容器中并更名为uni.jar
+  ADD springboot-web-login-simple-0.1.jar uni.jar
+  # 运行jar包
+  RUN bash -c 'touch /uni.jar.jar'
+  ENTRYPOINT ["java","-jar","/uni.jar"]
+  #暴露8080作为web访问端口
+  EXPOSE 8080
+  ```
+
+  
+
++ 3 编写docker-compose文件
+
+  ```dockerfile
+  version: "3"
+  
+  services:
+    microService:
+      image: uni:0.1
+      container_name: simple_springboot_login
+      ports:
+        - "8081:8080"
+      volumes:
+        - /app/microService:/data
+      networks:
+        - uni_net
+      depends_on:
+        - uni_redis
+        - uni_mysql
+  
+    uni_redis:
+      image: redis:6.0.16
+      container_name: uni_redis
+      ports:
+        - "6379:6379"
+      volumes:
+        - /opt/module/docker/uni/redis/redis.conf:/etc/redis/redis.conf
+        - /opt/module/docker/uni/redis/data:/data
+      networks:
+        - uni_net
+      command: redis-server /etc/redis/redis.conf
+  
+    uni_mysql:
+      image: mysql:8
+      restart: always
+      container_name: uni_mysql
+      environment:
+        MYSQL_ROOT_PASSWORD: 'woaini'
+        MYSQL_ALLOW_EMPTY_PASSWORD: 'no'
+      ports:
+        - "3306:3306"
+      volumes:
+        - /opt/module/docker/uni/mysql/db:/var/lib/mysql
+        - /opt/module/docker/uni/mysql/conf.d:/etc/mysql/conf.d
+        # 配置mysql容器的初始化sql脚本
+        - /opt/module/docker/uni/mysql/init:/docker-entrypoint-initdb.d
+      networks:
+        - uni_net
+      command: --default-authentication-plugin=mysql_native_password #解决外部无法访问
+  networks:
+    uni_net:
+  ```
+
++ 4 依次运行下面命令
+
+  ```shell
+  docker build -t uni:0.1 .
+  
+  docker-compose up -d
+  
+  docker-compose logs -f | grep simple_springboot_login
+  ```
+
+  
+
+![](\image\服务日志.png)
+
+
+至此，docker-compose的功能测试完毕。
