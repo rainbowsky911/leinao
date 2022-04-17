@@ -1,4 +1,4 @@
-Docker
+### Docker
 
 #### 一、Docker简介
 
@@ -127,7 +127,9 @@ docker info
 docker pull hello-world
 ```
 
-###### ![](\image\hello-world.png)
+
+
+![](\image\hello-world.png)
 
 
 
@@ -276,6 +278,14 @@ docker run --name  myNginx -d -p 81:80 nginx:v2
 **慎用docker commit**
 
 使用docker commit命令虽然可以比较直观的理解镜像分成存储的概念，但是实际环境中并不会这样使用
+
+
+
+
+
+###### 4.4容器卷和主机互通互联
+
+
 
 
 
