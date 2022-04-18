@@ -514,7 +514,7 @@ $ docker run -d -v mydata:/data xxxx
 
 
 
-##### 4.6使用Dockerfile构建SpringBoot应用镜像
+##### 4.7使用Dockerfile构建SpringBoot应用镜像
 
 1 编写Dockerfile文件
 
@@ -532,7 +532,7 @@ ENTRYPOINT java ${JAVA_OPTS} -jar /usr/local/demo_app/mall-tiny.jar
 
 2 使用maven打包，将应用jar包及Dockerfile上传到Linux服务器
 
-![](C:\Users\tuouren\Desktop\docker\image\mall-tiny.png)
+![](image\mall-tiny.png)
 
 3 在Linux上构建docker镜像
 
@@ -554,6 +554,51 @@ docker run \
 -e JAVA_OPTS='-server -Xmx1024m -Xms1024m' \
 -d \
 mall-tiny:1
+```
+
+
+
+##### 4.8使用Dockerfile构建SpringBoot镜像优化
+
+目录截图
+
+![](\image\dockerfile构建镜像文件目录截图.png)
+
++ 在我们的宿主机目录创建Dockerfile文件，以及添加打包好的jar包
+
+```dockerfile
+FROM openjdk:8
+ADD demo.jar /app/demo.jar
+EXPOSE 8080
+ENTRYPOINT ["java","-Duser.timezone=GMT+08","-jar","/app/demo.jar"]
+```
+
+
+
++ 构建镜像
+
+  ```
+  docker build -t spring_dockerfile:v1 .
+  ```
+
+  
+
++ 运行一个容器
+
+  ```
+  docker run -it -d --name spring_dockfile_test -v /data/dockfile_test:/app  -p 7777:8080 spring_dockerfile:v1 
+  ```
+
+**我们将/data/dockerfile_test/目录和容器内部的app目录挂载了，二者之间可以进行数据同步，我们在宿主机下面新增一个文件，容器内部也会同步这个文件**
+
+![](\image\挂载完成的容器目录截图.png)
+
+
+
+我们以后修改了项目代码，我们**只需要把宿主机目录下的jar文件给替换了**，重新启动容器就可以看到修改后的效果了。
+
+```shell
+docker restart   spring_dockfile_test
 ```
 
 
@@ -844,11 +889,9 @@ mybatis:
 
 
 
-#### 其他：
+#### 参考内容：
 
 参考：
-
-
 
 + [Docker 学习新手笔记：从入门到放弃](https://hijiangtao.github.io/2018/04/17/Docker-in-Action/)
 + [Docker-从入门到实践](https://yeasy.gitbook.io/docker_practice/compose/usage)
