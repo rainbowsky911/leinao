@@ -257,7 +257,7 @@ docker commit [选项] <容器ID或容器名>  [<仓库名> [:<标签>]]
 ```shell
 docker commit  \
 --author 'dawei zhang' \
---message  "修改了默认网页" \
+--message  "Hello Docker! 我修改了nginx默认欢迎页" \
 edf25f309293   \
 nginx:v2
 
@@ -272,6 +272,20 @@ docker run --name  myNginx -d -p 81:80 nginx:v2
 ```
 
 
+
+
+
+查看我们修改后的nginx首页，发现修改成功
+
+```shell
+#进入我们的nginx容器内部
+docker exec -it a8fdb09ea54e /bin/bash
+
+###执行修改命令
+echo '<h1>Hello Docker! 我修改了nginx默认欢迎页！</h1>' > /usr/share/nginx/html/index.html
+```
+
+![](\image\更改后的nginx欢迎页.png)
 
 
 
