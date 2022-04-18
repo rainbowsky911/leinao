@@ -589,7 +589,20 @@ Compose的默认管理对象是项目，通过子命令对项目中的一组容�
 
 Compose支持Linux、macOS、Windows三大平台
 
+**术语**
 
++ 服务(service) :一个应用容器，实际上可以运行多个相同的镜像实例
++ 项目(project)：由一组关联的应用容器组成的一个完整业务单元
+
+可见，一个项目可以由多个服务(容器)关联而成，Compose面向项目进行管理
+
+
+
+**场景**
+
+最常见的是web网站，该项目包含web应用和缓存。下面我们用 `Python` 来建立一个能够记录页面访问次数的 web 网站。
+
+参考:[docker-compose用 Python来建立一个能够记录页面访问次数的 web 网站](https://yeasy.gitbook.io/docker_practice/compose/usage)
 
 **pip安装**这种方式是将 Compose 当作一个 Python 应用来从 pip 源中安装。
 
@@ -611,32 +624,23 @@ pip3 install docker-compose
 docker-compose version
 ```
 
-![](C:\Users\tuouren\Desktop\docker\image\docker-compose版本.png)
+![](image\docker-compose版本.png)
 
 可以看到类似如下输出，说明安装成功
 
 
 
-###### 5.2使用
+###### 5.2使用docker-compose建立一个能够记录页面访问次数的 web 网站
 
 
 
-**术语**
-
-+ 服务(service) :一个应用容器，实际上可以运行多个相同的镜像实例
-+ 项目(project)：由一组关联的应用容器组成的一个完整业务单元
-
-可见，一个项目可以由多个服务(容器)关联而成，Compose面向项目进行管理
 
 
+*文件目录截图*
 
-**场景**
+![](image\compose目录下文件截图.png)
 
-最常见的是web网站，该项目包含web应用和缓存。下面我们用 `Python` 来建立一个能够记录页面访问次数的 web 网站。
-
-
-
-**web应用**
++ **web应用**
 
 新建文件夹，在该目录中编写 `app.py` 文件
 
@@ -656,7 +660,7 @@ if __name__ == "__main__":
     app.run(host="0.0.0.0", debug=True)
 ```
 
-**Dockerfile**
++ **Dockerfile**
 
 编写Dockerfile文件，内容为
 
@@ -668,9 +672,32 @@ RUN pip install redis flask
 CMD ["python", "app.py"]
 ```
 
-**docker-compose.yml**
++ **docker-compose.yml**
 
 编写docker-compose.yml文件，这个是Compose使用的主模板文件
+
+```dockerfile
+version: '3'
+services:
+
+  web:
+    build: .
+    ports:
+     - "5000:5000"
+
+  redis:
+    image: "redis:alpine"
+```
+
++ **运行compose项目**
+
+```shell
+docker-compose up -d 
+```
+
+此时访问本地 `5000` 端口，每次刷新页面，计数就会加 1。
+
+![](\image\docker-compose部署并且访问服务.png)
 
 
 
@@ -680,11 +707,13 @@ CMD ["python", "app.py"]
 
 
 
+*项目gitee地址*：[使用docker-compose编排服务](https://gitee.com/zdwbmw/docker-compose-deployproeject)
+
 
 
 我们使用docker-compose编排一个springboot的服务，服务配置文件见下
 
-application.yml
++ application.yml
 
 ```yaml
 spring:
@@ -712,9 +741,13 @@ mybatis:
 
 
 
-+ 1 准备工作，使用maven打包，复制我们的jar包到linux下的一个目录中
+*文件目录截图*
 
-![](\image\jar包.png)
+![](image\compose部署springboot项目文件目录.png)
+
+
+
++ 1 准备工作，使用maven打包项目，复制我们的jar包到linux下的一个目录中
 
 
 
