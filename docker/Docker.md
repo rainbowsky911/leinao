@@ -339,7 +339,23 @@ cd  /tmp/myDockerData
 
 ###### 4.5 使用Dockerfile定制镜像
 
-Dockerfile是一个文本文件，其包含了一条条的指令，每一条指令构建一层，因此每一条指令的内容就是描述该层如何构建。
+Dockerfile是一个构建Docker镜像文本文件，其包含了一条条的指令，每一条指令构建一层，因此每一条指令的内容就是描述该层如何构建。
+
+官网文档：https://docs.docker.com/engine/reference/builder/
+
+
+
++ 每条保留关键字指令都必须为大写字母且后面至少跟一个参数
++ 指令从上到下，顺序执行
++ 每条指令都会创建一个新的镜像层并对镜像进行提交
+
+
+
+
+
+
+
+
 
 以之前的nginx镜像为例，这次我们使用Dockerfile来定制
 
@@ -431,9 +447,11 @@ COPY ./package.json /app/
 
 
 
-##### 4.6 Dockerfile指令
+###### 4.6 Dockerfile指令
 
-###### **COPY复制文件**
+
+
+COPY复制文件
 
 + COPY [--chown=<user>:<group>] <源路径>... <目标路径>
 
@@ -443,7 +461,7 @@ COPY ./package.json /app/
 
 
 
-###### ADD更高级的复制文件
+ADD更高级的复制文件
 
 ADD指令和COPY的性质基本一致。但是在COPY基础上增加了一些功能。如果<源文件>为一个tar压缩文件的话，压缩格式为gzip、bzip2的情况下，ADD指令将会自动解压缩这个压缩文件到<目标路径>去
 
@@ -459,26 +477,30 @@ ADD ubuntu-xenial-core-cloudimg-amd64-root.tar.gz /
 
 
 
-###### CMD容器启动命令
+CMD容器启动命令
 
 CMD命令和RUN很相似，也是两种格式
 
 + shell 格式，CMD<命令>
 + exec格式，CMD ["可执行文件", "参数1", "参数2"...]
 
+**CMD指令会被docker run后面的参数覆盖**
 
 
 
-
-###### ENTRYPOINT入口点
+ENTRYPOINT入口点
 
 ENTRYPOINT的格式和RUN指令格式一样。分为exec和shell格式。
 
 ENTRYPOINT的目的和CMD一样，都是在指定容器启动程序及参数。ENTRYPOINT在运行时也可以替代，不过比CMD要复杂。
 
+**ENTRYPOINT不会被docker run 后面的参数覆盖**
 
 
-###### ENV设置环境变量
+
+
+
+ENV设置环境变量
 
 格式有两种
 
@@ -494,7 +516,7 @@ ENV VERSION=1.0 DEBUG=on \
 
 
 
-###### VOLUME定义匿名卷
+VOLUME定义匿名卷
 
 + VOLUME ["<路径1>", "<路径2>"...]
 
@@ -514,7 +536,7 @@ $ docker run -d -v mydata:/data xxxx
 
 
 
-##### 4.7使用Dockerfile构建SpringBoot应用镜像
+###### 4.7使用Dockerfile构建SpringBoot应用镜像
 
 1 编写Dockerfile文件
 
@@ -558,7 +580,7 @@ mall-tiny:1
 
 
 
-##### 4.8使用Dockerfile构建SpringBoot镜像优化
+###### 4.8使用Dockerfile构建SpringBoot镜像优化
 
 目录截图
 
@@ -603,6 +625,158 @@ docker restart   spring_dockfile_test
 
 
 
+###### 4.9虚悬镜像
+
+虚悬镜像：仓库名、标签都是<none>的镜像，俗称dangling image
+
+
+
+**自己编写一个虚悬镜像**
+
+1 vim Dockerfile
+
+```dockerfile
+from ubuntu
+CMD echo 'action is success'
+```
+
+2 docker build .
+
+查看刚刚编写虚悬镜像
+
+![](\image\虚悬镜像.png)
+
+
+
+**查看虚悬镜像列表**
+
+![](image\查看所有虚悬镜像.png)
+
+
+
+**删除**
+
+虚悬镜像已经失去了价值，可以删除
+
+```shell
+#删除虚悬镜像
+docker image prune
+```
+
+
+
+###### 4.10使用dockerfile自定义构建centos7镜像
+
+
+
+1 我们在docker hub上拉一个centos7镜像，并运行它。
+
+```
+#拉取镜像
+docker pull centos:7
+
+##运行一个容器
+docker run -it -d  --name mycentos7 
+
+##进入容器内部
+docker exec -it mycentos7 /bin/bash
+
+##需求：执行ls  、vim  、java、ifcofnig命令，由于自带的centos7没有vim、java、ifconfig环境。所以我们需要自己去构建刚刚下载的centos7镜像
+
+```
+
+![](image\进入centos7内部.png)
+
+
+
+需求：可以看出我们从docker hub上拉取的centos7镜像运行的容器没有vim、java的环境
+
+
+
+2  **编写**
+
+
+
+JDK镜像下载地址
+
+https://mirrors.yangxingzhen.com/jdk/
+
+我们下载的镜像为jdk-8u171-linux-x64.tar.gz，新建一个目录。目录结构如下
+
+
+
+![](image\自定义centos镜像截图.png)
+
+
+
+
+
+Dockerfile文件内容如下
+
+```dockerfile
+FROM centos:7
+MAINTAINER zdw<zdwbmw@163.com>
+ 
+ENV MYPATH /usr/local
+WORKDIR $MYPATH
+ 
+#安装vim编辑器
+RUN yum -y install vim
+#安装ifconfig命令查看网络IP
+RUN yum -y install net-tools
+#安装java8及lib库
+RUN yum -y install glibc.i686
+RUN mkdir /usr/local/java
+#ADD 是相对路径jar,把jdk-8u171-linux-x64.tar.gz添加到容器中,安装包必须要和Dockerfile文件在同一位置
+ADD jdk-8u171-linux-x64.tar.gz /usr/local/java/
+#配置java环境变量
+ENV JAVA_HOME /usr/local/java/jdk1.8.0_171
+ENV JRE_HOME $JAVA_HOME/jre
+ENV CLASSPATH $JAVA_HOME/lib/dt.jar:$JAVA_HOME/lib/tools.jar:$JRE_HOME/lib:$CLASSPATH
+ENV PATH $JAVA_HOME/bin:$PATH
+ 
+EXPOSE 80
+ 
+CMD echo $MYPATH
+CMD echo "success--------------ok"
+CMD /bin/bash
+
+```
+
+
+
+构建
+
+```shell
+docker build -t cenotsjava8:v1 .
+```
+
+构建成功截图
+
+![](image\构建centos7镜像成功截图.png)
+
+
+
+运行
+
+```
+###运行自定义构建的cetos7容器
+docker run  -it -d --name my_centosjava8  centosjava8:v1
+
+###进入容器内部
+docker exec -it my_centosjava8 /bin/bash
+
+
+```
+
+
+
+![](image\自定义centosjava8容器.png)
+
+
+
+
+
 
 
 #### 五、Docker Compose
@@ -643,6 +817,24 @@ Compose支持Linux、macOS、Windows三大平台
 
 
 
+###### **5.2Compose常见命令**
+
++ docker-compose  up   	#启动所有docker-compose服务
++ docker-compose up -d   # 启动所有docker-compose服务并后台运行
++ docker-compose down   #停用并删除容器、网络、卷、镜像
++ **docker-compose exec yml** 里面的服务id， #进入容器实例内部，docker-compose exec
+
+docker -compose.yml文件写的服务id   /bin/bash
+
++ docker-compose ps         #展示当前docker-compose编排过的运行的所有容器
++ docker-compose logs   yml里面的服务id        #查看容器输出日志
++ docker-compose top        #展示当前docker-compose编排过的容器进程
++ docker-compose config    #检查配置
++ docker-compose config -q   #检查配置，有问题才有输出
++ docker-conmpose restart    #重启服务
++ docker-compose start           #启动服务
++ docker-compose stop            #停止服务
+
 **场景**
 
 最常见的是web网站，该项目包含web应用和缓存。下面我们用 `Python` 来建立一个能够记录页面访问次数的 web 网站。
@@ -675,7 +867,7 @@ docker-compose version
 
 
 
-###### 5.2使用docker-compose建立一个能够记录页面访问次数的 web 网站
+###### 5.3使用docker-compose建立一个能够记录页面访问次数的 web 网站
 
 
 
@@ -748,7 +940,7 @@ docker-compose up -d
 
 
 
-###### 5.3使用docker-compose编排SpringBoot服务
+###### 5.4使用docker-compose编排SpringBoot服务
 
 
 
@@ -892,6 +1084,8 @@ mybatis:
 #### 参考内容：
 
 参考：
+
++ [Docker官网](**https://docs.docker.com/get-started/overview/**)
 
 + [Docker 学习新手笔记：从入门到放弃](https://hijiangtao.github.io/2018/04/17/Docker-in-Action/)
 + [Docker-从入门到实践](https://yeasy.gitbook.io/docker_practice/compose/usage)
