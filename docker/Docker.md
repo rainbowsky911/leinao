@@ -534,9 +534,47 @@ $ docker run -d -v mydata:/data xxxx
 
 
 
+###### 4.7虚悬镜像
+
+虚悬镜像：仓库名、标签都是<none>的镜像，俗称dangling image
 
 
-###### 4.7使用Dockerfile构建SpringBoot应用镜像
+
+**自己编写一个虚悬镜像**
+
+1 vim Dockerfile
+
+```dockerfile
+from ubuntu
+CMD echo 'action is success'
+```
+
+2 docker build .
+
+查看刚刚编写虚悬镜像
+
+![](\image\虚悬镜像.png)
+
+
+
+**查看虚悬镜像列表**
+
+![](image\查看所有虚悬镜像.png)
+
+
+
+**删除**
+
+虚悬镜像已经失去了价值，可以删除
+
+```shell
+#删除虚悬镜像
+docker image prune
+```
+
+
+
+###### 4.8使用Dockerfile构建SpringBoot应用镜像
 
 1 编写Dockerfile文件
 
@@ -580,7 +618,7 @@ mall-tiny:1
 
 
 
-###### 4.8使用Dockerfile构建SpringBoot镜像优化
+###### 4.9使用Dockerfile构建SpringBoot镜像优化
 
 目录截图
 
@@ -624,44 +662,6 @@ docker restart   spring_dockfile_test
 ```
 
 
-
-###### 4.9虚悬镜像
-
-虚悬镜像：仓库名、标签都是<none>的镜像，俗称dangling image
-
-
-
-**自己编写一个虚悬镜像**
-
-1 vim Dockerfile
-
-```dockerfile
-from ubuntu
-CMD echo 'action is success'
-```
-
-2 docker build .
-
-查看刚刚编写虚悬镜像
-
-![](\image\虚悬镜像.png)
-
-
-
-**查看虚悬镜像列表**
-
-![](image\查看所有虚悬镜像.png)
-
-
-
-**删除**
-
-虚悬镜像已经失去了价值，可以删除
-
-```shell
-#删除虚悬镜像
-docker image prune
-```
 
 
 
